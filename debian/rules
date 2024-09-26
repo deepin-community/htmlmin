@@ -1,4 +1,27 @@
 #!/usr/bin/make -f
 
+include /usr/share/dpkg/pkg-info.mk
+
+export PYBUILD_NAME=htmlmin
+
 %:
-	dh $@
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_auto_test:
+	# the specified tests (setup.py) does not exist
+
+override_dh_auto_install:
+	dh_auto_install
+	# Use the separate binary package for the cli script.
+	mkdir -p debian/htmlmin/usr/bin
+	mv debian/python3-htmlmin/usr/bin/htmlmin \
+		debian/htmlmin/usr/bin
+	rm -rf debian/python3-htmlmin/usr/bin
+
+override_dh_installman:
+	mkdir -p debian/htmlmin/usr/share/man/man1/
+	PYTHONPATH=. help2man --version-string $(DEB_VERSION_UPSTREAM) \
+		--no-info \
+		--name "htmlmin is a configurable HTML Minifier with safety features." \
+		debian/htmlmin/usr/bin/htmlmin > \
+		debian/htmlmin/usr/share/man/man1/htmlmin.1
